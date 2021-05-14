@@ -11,11 +11,7 @@
 #define finished 3
 
 ucontext_t c0, c1, c2, c3, c4, c5, context_obj;
-
-void decrement(void) { 
-    printf("In func1\n"); 
-    setcontext(&c0);
-}
+int n = 2;
 
 struct ThreadInfo {
  ucontext_t context;
@@ -24,6 +20,15 @@ struct ThreadInfo {
  };
 
 struct ThreadInfo thread_array[6];
+
+
+
+void decrement(void) { 
+    printf("%d", thread_array[1].count_val = thread_array[1].count_val - 1);
+    setcontext(&c0);
+}
+
+
 
 void initializeThread (int index, int count_val, ucontext_t *arg){
     thread_array[index].context = *arg;
@@ -48,21 +53,28 @@ void exitThread (ucontext_t *arg){
 }
 
 void PWF_scheduler (void){
-    printf("schedule");
+    printf("inside scheduler\n");
+    getcontext(&c0);
+    runThread(&c1);
+    signal(SIGALRM, PWF_scheduler);
+    alarm(2);
+    sleep(2);
 }
 
 int main()
 {   
-    signal(SIGALRM, PWF_scheduler);
-    alarm(2);
-    sleep(3);
-    initializeThread(1, 5, &c1);
+    initializeThread(1, 6, &c1);
+    initializeThread(2, 8, &c2);
+    initializeThread(3, 10, &c3);
+    initializeThread(4, 4, &c4);
+    initializeThread(5, 14, &c5);
     createThread(&c1);
-    getcontext(&c0);
-    printf("%p, %p", c1.uc_link, &c0);
-    runThread(&c1);
-    runThread(&c1);
-    runThread(&c1);
+    createThread(&c2);
+    createThread(&c3);
+    createThread(&c4);
+    createThread(&c5);
+    
+    PWF_scheduler();
     printf("exiting");
     free(c1.uc_stack.ss_sp);
     return 0;
