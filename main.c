@@ -14,7 +14,7 @@
 ucontext_t context_array[6];
 int running_thread, running_thread_temp, randint, sum;
 int * current_value;
-int flag = 0, flag_firstRunScheduler = 1, flag_firstRunSelect = 1;
+int flag = 0, flag_firstRunScheduler = 1, flag_firstRunSelect = 1, finishedNum = 0, counter;
 int i;
 int thresholds[5];
 
@@ -27,11 +27,19 @@ struct ThreadInfo {
 
 struct ThreadInfo thread_array[6];
 
+void printSpace(int arg){
+    for (i = 1; i < arg; ++i){
+        printf(" \t");
+        }
+}
+
 void increment(void) { 
     current_value = &thread_array[running_thread].current_val;
-    sleep(0.1);
+    sleep(1);
+    printSpace(running_thread);
     printf("%d\n", ++(*current_value));
-    sleep(0.1);
+    sleep(1);
+    printSpace(running_thread);
     printf("%d\n", ++(*current_value));
     if(thread_array[running_thread].count_val == *current_value){
         thread_array[running_thread].state = finished;
@@ -68,18 +76,27 @@ void exitThread (ucontext_t *arg){
 void printThisStatus(int arg){
     i = 1;
     flag = 0;
+    counter = 0;
     while(i<6){
         if(thread_array[i].state == arg){
             if(!flag){ flag = 1; }
             else{ printf(","); }
             printf("T%d", i);
+            counter ++;
         }
         i ++;
     }
+
+    for (i = 0; i < 6-counter; ++i){
+        printf("  ");
+    }
+    
 }
 
 void printStatus (void){
-    printf("running>T%d\tready>", running_thread);
+    printf("running>");
+    printThisStatus(running);
+    printf("\tready>");
     printThisStatus(ready);
     printf("\tfinished>");
     printThisStatus(finished);
@@ -96,16 +113,15 @@ int selectThread (void){
         flag_firstRunSelect = 0;
     }
     randint = rand() % sum;
-    printf("randint: %d\n", randint);
     for (i = 1; i < 6; ++i){
         if(randint < thresholds[i-1]){
             if(thread_array[i].state != finished){
                 running_thread = i;
-                printf("enters here");
                 break;
             }
             else{
                 selectThread();
+                break;
             }
         }
     }
@@ -113,12 +129,21 @@ int selectThread (void){
 
 void scheduler (void){
     if(flag_firstRunScheduler == 0){ running_thread_temp = running_thread; }
-    else { flag_firstRunScheduler = 0;}
-    selectThread();
-    printf("Running thread is: %d\n", running_thread);
-    thread_array[running_thread].state = running;
-    if(!(running_thread_temp == running_thread)){ printStatus(); }
-    runThread(&context_array[running_thread]);
+    else { flag_firstRunScheduler = 0;
+        printf("Threads:\nT1\tT2\tT3\tT4\tT5");
+        }
+    if(thread_array[running_thread].state == finished){finishedNum ++;}
+    if(finishedNum != 5){ 
+        selectThread();
+        thread_array[running_thread].state = running;
+        if(!(running_thread_temp == running_thread)){ printStatus(); }
+        runThread(&context_array[running_thread]); 
+        }
+    else {
+        running_thread = sizeof(thread_array) + 10;
+        printStatus();
+    }
+    
 }
 
 void PWF_scheduler (void){
@@ -140,7 +165,7 @@ int main()
         i++;
     }
     
-    while(1){
+    while(finishedNum != sizeof(thread_array) - 1){
         PWF_scheduler();
     }
     
