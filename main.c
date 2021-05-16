@@ -36,6 +36,9 @@ void increment(void) {
     if(thread_array[running_thread].count_val == *current_value){
         thread_array[running_thread].state = finished;
     }
+    else{
+        thread_array[running_thread].state = ready;
+    }
     setcontext(&context_array[0]);
 }
 
@@ -88,14 +91,17 @@ int selectThread (void){
         for (i = 1; i < 6; ++i){ 
             sum += thread_array[i].count_val;
             thresholds[i-1] = sum;
+            printf("%d\n", sum);
         }
         flag_firstRunSelect = 0;
     }
     randint = rand() % sum;
+    printf("randint: %d\n", randint);
     for (i = 1; i < 6; ++i){
         if(randint < thresholds[i-1]){
             if(thread_array[i].state != finished){
                 running_thread = i;
+                printf("enters here");
                 break;
             }
             else{
