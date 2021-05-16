@@ -28,17 +28,15 @@ struct ThreadInfo {
 struct ThreadInfo thread_array[6];
 
 void printSpace(int arg){
-    for (i = 1; i < arg; ++i){
-        printf(" \t");
-        }
+    for (i = 1; i < arg; ++i){ printf(" \t");}
 }
 
 void increment(void) { 
     current_value = &thread_array[running_thread].current_val;
-    sleep(1);
+    // sleep(1);
     printSpace(running_thread);
     printf("%d\n", ++(*current_value));
-    sleep(1);
+    // sleep(1);
     printSpace(running_thread);
     printf("%d\n", ++(*current_value));
     if(thread_array[running_thread].count_val == *current_value){
@@ -87,10 +85,7 @@ void printThisStatus(int arg){
         i ++;
     }
 
-    for (i = 0; i < 6-counter; ++i){
-        printf("  ");
-    }
-    
+    for (i = 0; i < 6-counter; ++i){ printf("  ");}
 }
 
 void printStatus (void){
@@ -138,7 +133,10 @@ void scheduler (void){
         thread_array[running_thread].state = running;
         if(!(running_thread_temp == running_thread)){ printStatus(); }
         runThread(&context_array[running_thread]); 
+        if(thread_array[running_thread].state == finished){
+            exitThread(&thread_array[running_thread].context);
         }
+    }
     else {
         running_thread = sizeof(thread_array) + 10;
         printStatus();
@@ -157,7 +155,7 @@ void SRTF_scheduler (void){
 int main()
 {   
     srand(time(NULL));
-    
+    getcontext(&context_array[0]);
     i = 1;
     while(i < 6){
         initializeThread(i, i*2, &context_array[i]);
@@ -165,10 +163,9 @@ int main()
         i++;
     }
     
-    while(finishedNum != sizeof(thread_array) - 1){
+    while(finishedNum != 5){
         PWF_scheduler();
     }
-    
     printf("exiting");
     return 0;
 }
