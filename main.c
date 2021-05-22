@@ -18,7 +18,7 @@ int running_thread, running_thread_temp, randint, sum;
 int * current_value;
 int flag = 0, flag_firstRunScheduler = 1, flag_firstRunSelect = 1, finishedNum = 0, counter, common_denominator, min, schedulerType;
 int i, j;
-int thresholds[5];
+int thresholds[5], remainingTime[5];
 
 struct ThreadInfo {
     ucontext_t context;
@@ -35,10 +35,10 @@ void printSpace(int arg){
 
 void increment(void) { 
     current_value = &thread_array[running_thread].current_val;
-    // sleep(1);
+    sleep(1);
     printSpace(running_thread);
     printf("%d\n", ++(*current_value));
-    // sleep(1);
+    sleep(1);
     printSpace(running_thread);
     printf("%d\n", ++(*current_value));
     if(thread_array[running_thread].count_val == *current_value){
@@ -100,9 +100,8 @@ void printStatus (void){
     printf("\n");
 }
 
-int selectThread (void){
-    
-    if(schedulerType == PandWF){
+int selectThread (int arg){
+    if(arg == PandWF){
         if(flag_firstRunSelect){
             sum = 0;
             for (i = 1; i < 6; ++i){ 
@@ -119,18 +118,32 @@ int selectThread (void){
                     break;
                 }
                 else{
-                    selectThread();
+                    selectThread(arg);
                     break;
                 }
             }
         }
     }
     else{
-        
+        for(i = 1; i < 6; ++i){
+            remainingTime[i-1] = thread_array[i].count_val - thread_array[i].current_val;
+            if(remainingTime[i-1] != 0){
+                running_thread = i;
+                // printf("running thread: %d\n", running_thread);
+            }
+        }
+
+        for(i = 1; i < 6; ++i){
+            if((remainingTime[running_thread - 1] > remainingTime [i-1]) && (thread_array[i].state != finished)){
+                running_thread = i;
+                // printf("running thread: %d\n", running_thread);
+            }
+        }
 
     }
-    
 }
+    
+
 
 int printShares (void){
     min = thread_array[1].count_val;
@@ -158,7 +171,7 @@ int printShares (void){
     printf("\n\n");
 }
 
-void scheduler (void){
+void scheduler (int arg){
     if(flag_firstRunScheduler == 0){ running_thread_temp = running_thread; }
     else { flag_firstRunScheduler = 0;
         printShares();
@@ -166,12 +179,13 @@ void scheduler (void){
         }
     if(thread_array[running_thread].state == finished){finishedNum ++;}
     if(finishedNum != 5){ 
-        selectThread();
+        selectThread(arg);
         thread_array[running_thread].state = running;
         if(!(running_thread_temp == running_thread)){ printStatus(); }
         runThread(&context_array[running_thread]); 
         if(thread_array[running_thread].state == finished){
             exitThread(&thread_array[running_thread].context);
+            // printf("finished state: %d\n", running_thread);
         }
     }
     else {
@@ -182,11 +196,11 @@ void scheduler (void){
 }
 
 void PWF_scheduler (void){
-    scheduler();
+    scheduler(PandWF);
 }
 
 void SRTF_scheduler (void){
-    scheduler();
+    scheduler(SRTF);
 }
 
 int main()
@@ -223,7 +237,8 @@ int main()
     }
     
     while(finishedNum != 5){
-        PWF_scheduler();
+        if(schedulerType = PandWF) {PWF_scheduler();}
+        else if( schedulerType = SRTF) {SRTF_scheduler();}
     }
     return 0;
 }
