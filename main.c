@@ -1,5 +1,3 @@
-// EE442 HW2
-// Eray İbrahimoğlu 2095065
 // Compiles with "gcc main.c -o main" on Ubuntu 20.04 LTS
 
 // Include neccesary libraries
